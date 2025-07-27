@@ -1,17 +1,54 @@
-# Connecting the Dots Challenge - Round 1A Submission
+# Connecting the Dots Challenge - Round 1B Submission
 
-## My Approach
+This repository contains the solution for Round 1B, which addresses the multi-document analysis challenge. The system is designed to process a collection of PDF documents and, based on a user's prompt, identify and extract the most relevant sections, presenting them in a structured and ranked format.
 
-This solution extracts a structured outline (Title, H1, H2, H3) from PDF documents by implementing a robust, two-pass strategy designed to handle complex documents where headings share similar styles.
+## Core Methodology
 
-The core logic operates as follows:
+This solution implements a sophisticated, three-stage analysis pipeline to transform a collection of raw documents into a targeted, actionable summary. The approach was specifically engineered to maximize relevance according to the prompt and to ensure the quality of the extracted text, even from complex and poorly structured documents.
 
-1.  **Pass 1: Style Analysis & Candidate Extraction:**
-    *   **Style Cataloging:** The script first performs a full analysis of the document to create a catalog of all font styles (combinations of size and weight). It identifies the most common style as body text.
-    *   **Heading Style Ranking:** It then identifies all styles more prominent than the body text and ranks them to create a definitive map (e.g., largest style = H1, second largest = H2, etc.).
-    *   **Candidate Filtering:** The script extracts all text matching these heading styles while running it through a strict filter to remove junk data and table headers.
+The methodology is as follows:
 
-2.  **Pass 2: Hierarchical Correction:**
-    *   The script iterates through the clean list of heading candidates and enforces a logical hierarchy. For instance, if it finds an H2 that doesn't have a parent H1, it promotes it to H1. This ensures the final output is always structurally sound.
+1.  **Multi-Document Outline Aggregation:** The system begins by processing every PDF in the input collection. It uses a high-accuracy heading extractor with strict filtering rules to generate a clean outline for each document. These individual outlines are then aggregated into a single master list of all potential sections from all documents.
 
-This style-based ranking and hierarchical correction approach makes the solution resilient to documents that don't use traditional heading cues like numbering or bullet points.
+2.  **High-Value Relevance Ranking:** This stage is the intelligent core of the solution, designed to directly address the "Section Relevance" scoring criterion. To rank sections by importance, the script calculates a relevance score for every heading against the user's prompt (`persona` + `job_to_be_done`). The scoring algorithm uses a **High-Value Keyword Bonus**:
+    *   It first identifies key terms directly from the user's `job_to_be_done` description.
+    *   Any section heading containing one of these high-value keywords receives a significant score bonus, ensuring that the most on-topic sections are always ranked at the top.
+    *   A secondary word-overlap score is used to rank the remaining sections.
+
+3.  **Intelligent Text Extraction:** To fulfill the "Sub-Section Relevance" criterion, the solution employs a robust text extractor with a built-in **repeating element detector**.
+    *   Before extraction, the script analyzes each document to automatically identify text blocks that repeat across multiple pages (e.g., page headers and footers).
+    *   During the extraction process, this list of "junk text" is used as an explicit filter. This ensures that the final `refined_text` is of high quality and free of repetitive, non-content elements, resulting in a clean and useful output.
+
+## Technology Stack
+
+*   **Libraries**:
+    *   `PyMuPDF (fitz)`: This high-performance library is used for both the initial heading extraction and for the final, coordinate-based text extraction from the source PDFs. Its speed and accuracy are essential for meeting the challenge's performance constraints.
+    *   `os`, `json`, `re`, `datetime`: Standard Python libraries are used for file system operations, text processing, and generating the final timestamped JSON output according to the specified schema.
+
+*   **Models**:
+    *   This solution does not use any pre-trained AI or machine learning models. The relevance ranking and text extraction logic are purely algorithmic, guaranteeing compliance with the 1GB model size limit and ensuring fast, CPU-only execution.
+
+## Project Setup and Execution
+
+The project is containerized using Docker and is fully compliant with the offline execution requirement. The `input` directory is designed to hold a collection of PDF files and a single `prompt.json` file.
+
+### 1. Build the Docker Image
+
+With Docker running, navigate to the project's root directory in your terminal and execute the following build command:
+
+```sh
+docker build --platform linux/amd64 -t mysolution-1b .
+```
+
+### 2. Run the Solution
+
+Ensure your input directory is populated with the desired PDF collection and a prompt.json file. Execute the run command from the project root:
+
+```sh
+docker run --rm -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output --network none mysolution-1b
+```
+
+
+
+
+
