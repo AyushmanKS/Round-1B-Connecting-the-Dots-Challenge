@@ -48,7 +48,4 @@ Ensure your input directory is populated with the desired PDF collection and a p
 docker run --rm -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output --network none mysolution-1b
 ```
 
-
-
-
-
+The application will process the entire collection based on the prompt and generate a single challenge1b_output.json file in the output directory.
